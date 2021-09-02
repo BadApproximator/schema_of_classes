@@ -1,57 +1,48 @@
 class Mannequin {
     constructor() {
         /** all measurements interested for us */
-        init_measures();
-        /** all morphs on mannequin */
-        init_morphs();
-        /** meshes or smth else (?) */
-        this.lines = [];
+        this.measures = [];
+        this.init_measures(this.measures);
     }
-    /* get morph(name) {
-        for (let m in this.morphs) {
-            if (m.name == name)
-                return m;
-        }
-        throw new Error(`Morph ${name} doesn't exist.`);
-    } */
     init_measures(measures) {
         /**TODO: hardcoding for setting names, morphs, lines of each measures */
-
+        measures.push(new Measure("height_measure", "height_morph", "height_line", ["knee_measure", "thigh_measure"]));
+        measures.push(new Measure("knee_measure", "knee_morph", "knee_line", []));
+        measures.push(new Measure("thigh_measure", "thigh_morph", "thigh_line", ["knee_measure"]));
     }
-    init_morphs(morphs) {
-        /**TODO: get name, factor and measure from morph */
-    }
-    get measure(name) {
-        for (let m in this.measures) {
+    get_measure(name) {
+        for (let m of this.measures) {
             if (m.name == name)
                 return m;
         }
         throw new Error(`Measure ${name} doesn't exist.`);
     }
-    set_descends() {
-        /** TODO: set relations between measures (hardcoding), fill decsends fields */
-    }
-    update_measure(measure, value) {
+    update_measure(measure_name, value) {
+        const measure = this.get_measure(measure_name);
         const morph = measure.morph;
-        const morph_factor = this.find_factor(measure, morph, value);
-        morph.factor = morph_factor;
-        for (let descend in measure.descends) {
-            descend.update_bounds();
+        const morph_factor = this.find_factor(measure, value);
+        this.set_morph_factor(morph, morph_factor);
+        for (let descend of measure.descends){
+            const m = this.get_measure(descend);
+            m.update_bounds();
         }
     }
     /** Bisection method */
-    find_factor(measure, value, accuracy = 10e-3) {
+    find_factor(measure, value, accuracy = 1e-3) {
         let x, dx;
-        const line = measure.line;
         let L = 0, R = 1;
         while (R - L > accuracy) {
             dx = (R - L) / 2;
             x = L + dx;
-            if (line.calc_len(x) < value)
+            if (measure.calc_len(x) < value)
                 L = x;
             else R = x;
         }
+        return x;
     }
+    set_morph_factor(morph, factor){
+        // TODO
+    };
 }
 
 class Morph {
@@ -63,34 +54,22 @@ class Morph {
 }
 
 class Measure {
-    constructor() {
-        this.name = null;
-        this.morph = null;
-        this.line = null;
+    constructor(name, morph, line, descends = []) {
+        this.name = name;
+        this.morph = morph;
+        this.line = line;
         this.lower_bound = null; /** line length when factor equals to 0 */
         this.upper_bound = null; /** line length when factor equals to 1 */
-        this.descends = []; /** those measurements that depend from this one */
+        this.descends = descends; /** those measurements that depend from this one */
+        this.update_bounds();
     }
+    calc_len(morph_factor){
+        // TODO
+        return 0.5;
+    };
     /** update bounds when parent measurement was updated */
     update_bounds() {
-        this.lower_bound = line.calc_len(0);
-        this.upper_bound = line.calc_len(1);
+        this.lower_bound = this.calc_len(0);
+        this.upper_bound = this.calc_len(1);
     }
 }
-
-class Line {
-    constructor() {
-        this.name = null;
-        this.mesh = null;
-        this.morph = null;
-    }
-    get len() {
-        return this.calc_len(this.morph.factor);
-    }
-    calc_len(morph_factor) {
-        let l;
-        /** TODO: calcucation */
-        return l;
-    }
-}
-
